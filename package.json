@@ -1,0 +1,62 @@
+{
+  "name": "sqlite-worker",
+  "version": "0.0.0",
+  "description": "A simple, and persistent, SQLite database for Web and Workers",
+  "main": "./cjs/index.js",
+  "scripts": {
+    "build": "npm run import && npm run cjs && npm run rollup:es && npm run rollup:babel && npm run min",
+    "import": "terser node_modules/sql.js/dist/sql-wasm-debug.js -m -o esm/sql-wasm.js && sed -i 's/module=undefined;/var module=void 0;/' esm/sql-wasm.js && echo ';export default initSqlJs;' >> esm/sql-wasm.js",
+    "cjs": "ascjs --no-default esm cjs",
+    "rollup:es": "rollup --config rollup/es.config.js && sed -i.bck 's/^var /self./' es.js && rm -rf es.js.bck",
+    "rollup:babel": "rollup --config rollup/babel.config.js && sed -i.bck 's/^var /self./' index.js && rm -rf index.js.bck",
+    "min": "terser index.js --comments='/^!/' -c -m -o min.js"
+  },
+  "keywords": [
+    "sqlite",
+    "persistent",
+    "indexeddb",
+    "worker"
+  ],
+  "author": "Andrea Giammarchi",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "ascjs": "^4.0.3",
+    "rollup": "^2.36.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "sql.js": "^1.4.0",
+    "terser": "^5.5.1"
+  },
+  "module": "./esm/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./esm/index.js",
+      "default": "./cjs/index.js"
+    },
+    "./init": {
+      "import": "./esm/init.js",
+      "default": "./cjs/init.js"
+    },
+    "./worker": {
+      "import": "./esm/worker.js",
+      "default": "./cjs/worker.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "unpkg": "min.js",
+  "dependencies": {
+    "sqlite-tag": "^1.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebReflection/sqlite-worker-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WebReflection/sqlite-worker-/issues"
+  },
+  "homepage": "https://github.com/WebReflection/sqlite-worker-#readme"
+}
