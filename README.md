@@ -5,6 +5,13 @@
 A simple, and persistent, SQLite database for Web and Workers, based on [sql.js](https://github.com/sql-js/sql.js#readme) and [sqlite-tag](https://github.com/WebReflection/sqlite-tag#readme).
 
 
+#### ℹ Very Important
+
+This module is currently using the debugging version of `sql.js`, for the simple reason I had out of memory issues trying to load the production version as module.
+
+I don't know if once that gets fixed the previous db would be compatible, so please feel free to use and test this module, but be aware it might change soon with a faster, likely smaller, *WASM* version of sqlite3.
+
+
 
 ### Initialization Options
 
