@@ -13,12 +13,17 @@ Both `init([options])` and `SQLiteWorker(path[, options])` optionally accept a c
   * **name**: the persistent database name. By default it's the *string* `'sqlite-worker'`
   * **dir**: where to find `sql.js` files.  By default it's the *string* `'https://sql.js.org/dist'`
   * **database**: an initial SQLite database, as `Uint8Array` instance. This is used only the very first time, and it fallbacks to `new Uint8Array(0)`.
-  * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
   * **timeout**: minimum interval, in milliseconds, between saves, to make storing, and exporting, the database, less greedy. By default it's the *number* `250`.
 
 #### Worker Extra Options
 
   * **library**: where to find the `sqlite-worker` library. By default is the *string* `https://unpkg.com/sqlite-worker?module`
+
+
+#### Direct init Extra Options
+
+  * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
+
 
 
 
@@ -113,3 +118,8 @@ init({name: 'my-db'}).then(async ({all, get, query}) => {
   console.log(await all`SELECT * FROM todos`);
 });
 ```
+
+## Compatibility
+
+This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*.
+
