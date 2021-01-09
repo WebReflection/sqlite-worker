@@ -1,6 +1,6 @@
 {
   "name": "sqlite-worker",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A simple, and persistent, SQLite database for Web and Workers",
   "main": "./cjs/index.js",
   "scripts": {
