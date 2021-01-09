@@ -3,9 +3,14 @@ let db = null;
 
 const retrieve = (db, method, id, {template, values}) => {
   db.then((module) => {
-    module[method].apply(null, [template].concat(values)).then(result => {
-      postMessage({id, result});
-    });
+    module[method].apply(null, [template].concat(values)).then(
+      result => {
+        postMessage({id, result});
+      },
+      ({message: error}) => {
+        postMessage({id, error});
+      }
+    );
   });
 };
 
@@ -17,7 +22,10 @@ addEventListener('message', ({data: {id, action, options}}) => {
                     'https://unpkg.com/sqlite-worker?module';
         db = import(lib).then(({init}) => init(options));
       }
-      return db.then(() => postMessage({id, result: 'OK'}));
+      return db.then(
+        () => postMessage({id, result: 'OK'}),
+        ({message: error}) => postMessage({id, error})
+      );
     case 'all':
       return retrieve(db, 'all', id, options);
     case 'get':

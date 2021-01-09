@@ -17,10 +17,13 @@ function SQLiteWorker(url, options) {
     worker.postMessage({id, action, options});
   });
   const worker = assign(new Worker(url), {
-    onmessage({data: {id, result}}) {
-      const {resolve} = cache.get(id);
+    onmessage({data: {id, result, error}}) {
+      const {resolve, reject} = cache.get(id);
       cache.delete(id);
-      resolve(result);
+      if (error)
+        reject(error);
+      else
+        resolve(result);
     }
   });
   return post('init', options).then(() => ({
