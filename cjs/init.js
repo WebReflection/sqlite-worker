@@ -50,12 +50,17 @@ const init = (options = {}) => new Promise((resolve, onerror) => {
             const save = () => {
               queue = queue.then(() => new Promise((resolve, onerror) => {
                 const uint8array = db.export();
-                assign(store('readwrite').put(uint8array, keyPath), {
+                assign(store('readwrite').put(uint8array, keyPath).transaction, {
                   onsuccess() {
+                    console.log('SUCCESS');
+                  },
+                  oncomplete() {
+                    console.log('COMPLETE');
                     resolve();
                     if (options.update)
                       options.update(uint8array);
                   },
+                  onabort: onerror,
                   onerror
                 });
               }));
