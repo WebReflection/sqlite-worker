@@ -15,7 +15,7 @@
         await query`INSERT INTO todos (value) VALUES (${'b'})`;
         await query`INSERT INTO todos (value) VALUES (${'c'})`;
       }
-      console.log(await all`SELECT * FROM todos`);
+      console.table(await all`SELECT * FROM todos`);
     });
   });
   </script>

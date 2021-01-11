@@ -9,13 +9,17 @@
     import('../esm/index.js'),
     import('./index.js')
   ]).then(([{init}, {default: test}]) => {
-    init({name: 'sqlite-worker-test-init'}).then(test);
+    init({
+      name: 'sqlite-worker-test-init'
+    }).then(test);
   });
   Promise.all([
     import('../esm/index.js'),
     import('./index.js')
   ]).then(([{SQLiteWorker}, {default: test}]) => {
-    SQLiteWorker('../esm/worker.js', {name: 'sqlite-worker-test-worker'}).then(test);
+    SQLiteWorker('../esm/worker.js', {
+      name: 'sqlite-worker-test-worker'
+    }).then(test);
   });
   </script>
 </head>

@@ -5,12 +5,6 @@
 A simple, and persistent, SQLite database for Web and Workers, based on [sql.js](https://github.com/sql-js/sql.js#readme) and [sqlite-tag](https://github.com/WebReflection/sqlite-tag#readme).
 
 
-#### ℹ Very Important
-
-This module is currently using the debugging version of `sql.js`, for the simple reason I had out of memory issues trying to load the production version as module.
-
-I don't know if once that gets fixed the previous db would be compatible, so please feel free to use and test this module, but be aware it might change soon with a faster, likely smaller, *WASM* version of sqlite3.
-
 
 
 ### Initialization Options
@@ -18,18 +12,23 @@ I don't know if once that gets fixed the previous db would be compatible, so ple
 Both `init([options])` and `SQLiteWorker(path[, options])` optionally accept a configuration/options object with the following fields:
 
   * **name**: the persistent database name. By default it's the *string* `'sqlite-worker'`
-  * **dir**: where to find `sql.js` files.  By default it's the *string* `'https://sql.js.org/dist'`
   * **database**: an initial SQLite database, as `Uint8Array` instance. This is used only the very first time, and it fallbacks to `new Uint8Array(0)`.
   * **timeout**: minimum interval, in milliseconds, between saves, to make storing, and exporting, the database, less greedy. By default it's the *number* `250`.
-
-#### Worker Extra Options
-
-  * **library**: where to find the `sqlite-worker` library. By default is the *string* `https://unpkg.com/sqlite-worker?module`
 
 
 #### Direct init Extra Options
 
+These options work only with direct initialization, so either in the main thread or via *Service Worker* after importing its `init` export.
+
   * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
+
+
+#### Extra Options
+
+These options are resolved by default internally to find the right files.
+
+  * **dir**: where to find `sql.js` files. By default it's the current module folder plus `/../sqlite`.
+  * **library**: where to find the `sqlite-worker` library itself. By default is wherever the module has been exported.
 
 
 
@@ -94,10 +93,7 @@ And the library can be initialized as such:
 import {SQLiteWorker} from 'sqlite-worker';
 
 // SQLiteWorker(workerPath[, options])
-SQLiteWorker('simple-worker.js', {
-  name: 'my-db',
-  library: '//unpkg.com/sqlite-worker?module'
-})
+SQLiteWorker('simple-worker.js', {name: 'my-db'})
   .then(async ({all, get, query}) => {
     await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
     const {total} = await get`SELECT COUNT(id) as total FROM todos`;
@@ -136,5 +132,5 @@ init({name: 'my-db'}).then(async ({all, get, query}) => {
 
 ## Compatibility
 
-This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*.
+This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*. Please note if you bundle this module there are chances it might not work as expected, as it needs to import *WASM* and other files at runtime, and bundlers might not give it a chance to find these files.
 

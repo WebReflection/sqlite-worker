@@ -17,11 +17,8 @@ const retrieve = (db, method, id, {template, values}) => {
 addEventListener('message', ({data: {id, action, options}}) => {
   switch (action) {
     case 'init':
-      if (!db) {
-        const lib = options && options.library ||
-                    'https://unpkg.com/sqlite-worker?module';
-        db = import(lib).then(({init}) => init(options));
-      }
+      if (!db)
+        db = import(options.library).then(({init}) => init(options));
       return db.then(
         () => postMessage({id, result: 'OK'}),
         ({message: error}) => postMessage({id, error})
