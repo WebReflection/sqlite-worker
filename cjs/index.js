@@ -19,7 +19,8 @@ function SQLiteWorker(options) {
   });
   const worker = assign(new Worker(
     options.worker ||
-    (library.slice(0, library.lastIndexOf('/')) + '/worker.js')
+    (library.slice(0, library.lastIndexOf('/')) + '/worker.js'),
+    {type: 'module'}
   ), {
     onmessage({data: {id, result, error}}) {
       const {resolve, reject} = cache.get(id);

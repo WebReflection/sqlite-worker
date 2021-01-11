@@ -6,6 +6,20 @@ A simple, and persistent, SQLite database for Web and Workers, based on [sql.js]
 
 
 
+### ⚠ Warning about Workers
+
+Obviously I was too naive to believe I could `import(...)` modules in 2021 inside workers too, but [the reality is different](https://stackoverflow.com/a/45578811/2800218):
+
+  * **Chrome** works without any issue whatsoever as *Worker* from the main thread, but *Service Worker* apparently cannot `import(...)` anything
+  * **Firefox** never had a dynamic `import`, or even static, I believe, so *Worker* here won't work
+  * **WebKit** has issues since 2016 too
+
+This means that while this module recommendation is to use its *SQLiteWorker* export, or to use the directly its *init* export via *Service Worker*, none of these recommendation actually work as expected, so that for a cross browser experience, using the *init* export from the main thread is the only option.
+
+Please note the *WASM* module *should* also offload from the main thread, but the thing is that I'd love for browsers to fix their inconsistencies regarding ES Modules and remove this whole warning session once they do.
+
+
+
 ## How to import this module
 
 This module is pre-bundled in a way it should work, and survive, 3rd party tools, but it needs to be able to reach its own `dist` folder.
@@ -17,7 +31,7 @@ Accordingly, the easiest way to use this module is the following:
 import {init, SQLiteWorker} from '//unpkg.com/sqlite-worker';
 
 // either direct init([options])
-// or use SQLiteWorker with defaults
+// or use SQLiteWorker with defaults (Chrome only)
 SQLiteWorker({name: 'my-db'}).then(() => {
   console.log('ready');
 });
@@ -40,7 +54,7 @@ Both `init([options])` and `SQLiteWorker([options])` optionally accept a configu
 
 #### Direct init Extra Options
 
-These options work only with direct initialization, so either in the main thread or via *Service Worker* after importing its `init` export.
+These options work only with direct initialization, so either in the main thread or via *Service Worker* (once fixed in Chrome) after importing its `init` export.
 
   * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
 
@@ -78,7 +92,32 @@ All tags are *asynchronous*, so that it's possible to *await* their result.
 
 
 
-### Worker usage
+### Direct usage
+
+This is currently the cross browser way to use this module, and it won't work within a *Service Worker* until Chrome fixes its bug.
+
+```js
+import {init} from 'sqlite-worker';
+
+// init([options])
+init({name: 'my-db'}).then(async ({all, get, query}) => {
+  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  if (total < 1) {
+    console.log('Inserting some value');
+    await query`INSERT INTO todos (value) VALUES (${'a'})`;
+    await query`INSERT INTO todos (value) VALUES (${'b'})`;
+    await query`INSERT INTO todos (value) VALUES (${'c'})`;
+  }
+  console.log(await all`SELECT * FROM todos`);
+});
+```
+
+
+
+### Worker usage (Chrome only)
+
+This module can also be used as *Worker*, which is a recommendation where the browser is compatible.
 
 If specified, you can pass your own worker via the `worker` option, but by default, this module can be initialized as such:
 
@@ -101,27 +140,6 @@ SQLiteWorker({name: 'my-db'})
 ```
 
 
-
-### Direct usage
-
-This module can also be used in the main thread, or be imported within a *Service Worker*, as opposite of creating a new worker from the main page.
-
-```js
-import {init} from 'sqlite-worker';
-
-// init([options])
-init({name: 'my-db'}).then(async ({all, get, query}) => {
-  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
-  if (total < 1) {
-    console.log('Inserting some value');
-    await query`INSERT INTO todos (value) VALUES (${'a'})`;
-    await query`INSERT INTO todos (value) VALUES (${'b'})`;
-    await query`INSERT INTO todos (value) VALUES (${'c'})`;
-  }
-  console.log(await all`SELECT * FROM todos`);
-});
-```
 
 ## Compatibility
 

@@ -16,6 +16,7 @@ const retrieve = (db, method, id, {template, values}) => {
 addEventListener('message', ({data: {id, action, options}}) => {
   switch (action) {
     case 'init':
+      console.log(options.library);
       if (!db)
         db = import(options.library).then(({init}) => init(options));
       return db.then(
