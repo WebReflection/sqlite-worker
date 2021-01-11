@@ -4,10 +4,12 @@
   "description": "A simple, and persistent, SQLite database for Web and Workers",
   "main": "./cjs/index.js",
   "scripts": {
-    "build": "npm run import && npm run cjs && npm run rollup:es",
-    "import": "cp node_modules/sql.js/dist/sql-wasm.{js,wasm} sqlite/",
-    "cjs": "ascjs --no-default esm cjs && sed -i 's/const library = .*/const library = __filename;/' cjs/index.js && sed -i 's/const {url} = .*/const {url} = {url: __filename};/' cjs/init.js",
-    "rollup:es": "rollup --config rollup/es.config.js && sed -i.bck 's/^var /self./' es.js && rm -rf es.js.bck"
+    "build": "npm run import && npm run cjs && npm run rollup:es && npm run worker",
+    "import": "cp node_modules/sql.js/dist/sql-wasm.{js,wasm} dist/",
+    "cjs": "ascjs --no-default esm cjs && npm run cjs:fix",
+    "cjs:fix": "sed -i 's/const library = .*/const library = __filename;/' cjs/index.js && sed -i 's/const {url} = .*/const {url} = {url: __filename};/' cjs/init.js",
+    "rollup:es": "rollup --config rollup/es.config.js",
+    "worker": "terser esm/worker.js --module -c -m -o dist/worker.js"
   },
   "keywords": [
     "sqlite",
@@ -28,7 +30,7 @@
     "sql.js": "^1.4.0",
     "terser": "^5.5.1"
   },
-  "module": "./esm/index.js",
+  "module": "./dist/index.js",
   "type": "module",
   "exports": {
     ".": {
@@ -45,10 +47,7 @@
     },
     "./package.json": "./package.json"
   },
-  "unpkg": "es.js",
-  "dependencies": {
-    "sqlite-tag": "^1.1.0"
-  },
+  "unpkg": "./dist/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WebReflection/sqlite-worker-.git"
@@ -56,5 +55,8 @@
   "bugs": {
     "url": "https://github.com/WebReflection/sqlite-worker-/issues"
   },
-  "homepage": "https://github.com/WebReflection/sqlite-worker-#readme"
+  "homepage": "https://github.com/WebReflection/sqlite-worker-#readme",
+  "dependencies": {
+    "sqlite-tag": "^1.1.0"
+  }
 }

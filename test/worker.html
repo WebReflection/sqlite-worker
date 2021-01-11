@@ -6,7 +6,7 @@
   <title>sqlite-worker</title>
   <script type="module">
   import('../esm/index.js').then(({SQLiteWorker}) => {
-    SQLiteWorker('../esm/worker.js', {name: 'test-db'}).then(async ({all, get, query}) => {
+    SQLiteWorker({name: 'test-db'}).then(async ({all, get, query}) => {
       await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
       const {total} = await get`SELECT COUNT(id) as total FROM todos`;
       if (total < 1) {

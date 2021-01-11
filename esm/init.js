@@ -26,7 +26,7 @@ const opener = (name, version = 1) => new Promise((resolve, onerror) => {
 
 export const init = (options = {}) => new Promise((resolve, onerror) => {
   const {url} = import.meta;
-  const dir = options.dir || (url.slice(0, url.lastIndexOf('/')) + '/../sqlite');
+  const dir = options.dir || (url.slice(0, url.lastIndexOf('/')) + '/../dist');
   // NEEDED DUE UGLY sql.js EXPORT DANCE
   self.exports = {};
   self.module = {exports};

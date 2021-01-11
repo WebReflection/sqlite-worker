@@ -6,14 +6,18 @@ let ids = 0;
 
 export {init} from './init.js';
 
-export function SQLiteWorker(path, options) {
+export function SQLiteWorker(options) {
+  const library = import.meta.url;
   const query = how => (template, ...values) => post(how, {template, values});
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
     cache.set(id, {resolve, reject});
     worker.postMessage({id, action, options});
   });
-  const worker = assign(new Worker(path), {
+  const worker = assign(new Worker(
+    options.worker ||
+    (library.slice(0, library.lastIndexOf('/')) + '/worker.js')
+  ), {
     onmessage({data: {id, result, error}}) {
       const {resolve, reject} = cache.get(id);
       cache.delete(id);
@@ -23,7 +27,6 @@ export function SQLiteWorker(path, options) {
         resolve(result);
     }
   });
-  const library = import.meta.url;
   return post('init', assign({library}, options)).then(() => ({
     all: query('all'),
     get: query('get'),

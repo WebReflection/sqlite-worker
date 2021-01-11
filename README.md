@@ -6,10 +6,32 @@ A simple, and persistent, SQLite database for Web and Workers, based on [sql.js]
 
 
 
+## How to import this module
+
+This module is pre-bundled in a way it should work, and survive, 3rd party tools, but it needs to be able to reach its own `dist` folder.
+
+Accordingly, the easiest way to use this module is the following:
+
+```js
+// note: no ?module needed, this is already exported as ESM
+import {init, SQLiteWorker} from '//unpkg.com/sqlite-worker';
+
+// either direct init([options])
+// or use SQLiteWorker with defaults
+SQLiteWorker({name: 'my-db'}).then(() => {
+  console.log('ready');
+});
+```
+
+Options defaults, such as `dir` and `library`, or even the `Worker` path, are all resolved automatically, as long as all `dist` files are reachable.
+
+It is, however, possible to change these configurations.
+
+
 
 ### Initialization Options
 
-Both `init([options])` and `SQLiteWorker(path[, options])` optionally accept a configuration/options object with the following fields:
+Both `init([options])` and `SQLiteWorker([options])` optionally accept a configuration/options object with the following fields:
 
   * **name**: the persistent database name. By default it's the *string* `'sqlite-worker'`
   * **database**: an initial SQLite database, as `Uint8Array` instance. This is used only the very first time, and it fallbacks to `new Uint8Array(0)`.
@@ -23,9 +45,18 @@ These options work only with direct initialization, so either in the main thread
   * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
 
 
+
+#### SQLiteWorker Extra Options
+
+These options work only with `SQLiteWorker` initialization.
+
+  * **worker**: the *string* path where the *JS* worker to use is located. By default, this is the [dist/worker.js](./dist/worker.js) file, which is a pre-optimized version of [this source](./esm/worker.js).
+
+
+
 #### Extra Options
 
-These options are resolved by default internally to find the right files.
+These options are resolved by default internally to find the right files. Change these options only if you know what you are doing.
 
   * **dir**: where to find `sql.js` files. By default it's the current module folder plus `/../sqlite`.
   * **library**: where to find the `sqlite-worker` library itself. By default is wherever the module has been exported.
@@ -49,51 +80,13 @@ All tags are *asynchronous*, so that it's possible to *await* their result.
 
 ### Worker usage
 
-This is the suggested way to use this module. The Worker can be as simple as this:
-
-```js
-// simple-worker.js
-let db = null;
-
-const retrieve = (db, method, id, {template, values}) => {
-  db.then((module) => {
-    module[method].apply(null, [template].concat(values)).then(
-      result => {
-        postMessage({id, result});
-      },
-      ({message: error}) => {
-        postMessage({id, error});
-      }
-    );
-  });
-};
-
-addEventListener('message', ({data: {id, action, options}}) => {
-  switch (action) {
-    case 'init':
-      if (!db)
-        db = import(options.library).then(({init}) => init(options));
-      return db.then(
-        () => postMessage({id, result: 'OK'}),
-        ({message: error}) => postMessage({id, error})
-      );
-    case 'all':
-      return retrieve(db, 'all', id, options);
-    case 'get':
-      return retrieve(db, 'get', id, options);
-    case 'query':
-      return retrieve(db, 'query', id, options);
-  }
-});
-```
-
-And the library can be initialized as such:
+If specified, you can pass your own worker via the `worker` option, but by default, this module can be initialized as such:
 
 ```js
 import {SQLiteWorker} from 'sqlite-worker';
 
-// SQLiteWorker(workerPath[, options])
-SQLiteWorker('simple-worker.js', {name: 'my-db'})
+// SQLiteWorker([options])
+SQLiteWorker({name: 'my-db'})
   .then(async ({all, get, query}) => {
     await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
     const {total} = await get`SELECT COUNT(id) as total FROM todos`;
@@ -111,7 +104,7 @@ SQLiteWorker('simple-worker.js', {name: 'my-db'})
 
 ### Direct usage
 
-This module can be used in the main thread, or be imported directly within a *Service Worker*, as opposite of creating a new worker from the main page.
+This module can also be used in the main thread, or be imported within a *Service Worker*, as opposite of creating a new worker from the main page.
 
 ```js
 import {init} from 'sqlite-worker';
@@ -132,5 +125,6 @@ init({name: 'my-db'}).then(async ({all, get, query}) => {
 
 ## Compatibility
 
-This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*. Please note if you bundle this module there are chances it might not work as expected, as it needs to import *WASM* and other files at runtime, and bundlers might not give it a chance to find these files.
+This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*.
 
+Please note if you bundle this module there are chances it might not work as expected, as it needs to import *WASM* and other files at runtime, and bundlers might not give it a chance to find these files. Keep the `dist` folder as it is, and import this module from it.

@@ -9,14 +9,18 @@ let ids = 0;
   exports.init = m.init;
 })(require('./init.js'));
 
-function SQLiteWorker(path, options) {
+function SQLiteWorker(options) {
+  const library = __filename;
   const query = how => (template, ...values) => post(how, {template, values});
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
     cache.set(id, {resolve, reject});
     worker.postMessage({id, action, options});
   });
-  const worker = assign(new Worker(path), {
+  const worker = assign(new Worker(
+    options.worker ||
+    (library.slice(0, library.lastIndexOf('/')) + '/worker.js')
+  ), {
     onmessage({data: {id, result, error}}) {
       const {resolve, reject} = cache.get(id);
       cache.delete(id);
@@ -26,7 +30,6 @@ function SQLiteWorker(path, options) {
         resolve(result);
     }
   });
-  const library = __filename;
   return post('init', assign({library}, options)).then(() => ({
     all: query('all'),
     get: query('get'),
