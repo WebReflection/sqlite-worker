@@ -1,4 +1,6 @@
 'use strict';
+const {load} = require('./utils.js');
+
 let db = null;
 
 const retrieve = (db, method, id, {template, values}) => {
@@ -18,7 +20,7 @@ addEventListener('message', ({data: {id, action, options}}) => {
   switch (action) {
     case 'init':
       if (!db)
-        db = import(options.library).then(({init}) => init(options));
+        db = load(options.library).then(({init}) => init(options));
       return db.then(
         () => postMessage({id, result: 'OK'}),
         ({message: error}) => postMessage({id, error})

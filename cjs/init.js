@@ -1,10 +1,9 @@
 'use strict';
 const SQLiteTag = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('sqlite-tag'));
+const {assign, dist, load} = require('./utils.js');
 
 const STORE = 'sqlite';
 const keyPath = 'buffer';
-
-const {assign} = Object;
 
 const opener = (name, version = 1) => new Promise((resolve, onerror) => {
   assign(indexedDB.open(name, version), {
@@ -26,18 +25,12 @@ const opener = (name, version = 1) => new Promise((resolve, onerror) => {
 });
 
 const init = (options = {}) => new Promise((resolve, onerror) => {
-  const {url} = {url: __filename};
-  const dir = options.dir || (url.slice(0, url.lastIndexOf('/')) + '/../dist');
-  // NEEDED DUE UGLY sql.js EXPORT DANCE
-  self.exports = {};
-  self.module = {exports};
-  import(dir + '/sql-wasm.js').then(() => {
-    const initSqlJs = self.module.exports;
-    delete self.exports;
+  const base = options.dist || dist;
+  load(base + '/sql-wasm.js').then(({default: initSqlJs}) => {
     Promise.all([
       opener(options.name || 'sqlite-worker'),
       initSqlJs({
-        locateFile: file => dir + '/' + file
+        locateFile: file => base + '/' + file
       })
     ]).then(
         ([iDB, {Database}]) => {

@@ -1,5 +1,5 @@
 'use strict';
-const {assign} = Object;
+const {assign, dist} = require('./utils.js');
 
 const cache = new Map;
 
@@ -10,7 +10,7 @@ let ids = 0;
 })(require('./init.js'));
 
 function SQLiteWorker(options) {
-  const library = __filename;
+  const base = options.dist || dist;
   const query = how => (template, ...values) => post(how, {template, values});
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
@@ -19,8 +19,7 @@ function SQLiteWorker(options) {
   });
   const worker = assign(new Worker(
     options.worker ||
-    (library.slice(0, library.lastIndexOf('/')) + '/worker.js'),
-    {type: 'module'}
+    (base + '/worker.js')
   ), {
     onmessage({data: {id, result, error}}) {
       const {resolve, reject} = cache.get(id);
@@ -31,7 +30,7 @@ function SQLiteWorker(options) {
         resolve(result);
     }
   });
-  return post('init', assign({library}, options)).then(() => ({
+  return post('init', assign({library: base + '/init.js'}, options)).then(() => ({
     all: query('all'),
     get: query('get'),
     query: query('query')
