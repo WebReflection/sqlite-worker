@@ -2,14 +2,16 @@ export default async ({all, get, query, raw}) => {
   await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM todos`;
   if (total < 1) {
-    await query`INSERT INTO todos (value) VALUES (${'a'})`;
-    await query`INSERT INTO todos (value) VALUES (${'b'})`;
-    await query`INSERT INTO todos (value) VALUES (${'c'})`;
+    for (let i = 0; i < 300; i++) {
+      await query`INSERT INTO todos (value) VALUES (${'a' + i})`;
+      await query`INSERT INTO todos (value) VALUES (${'b' + i})`;
+      await query`INSERT INTO todos (value) VALUES (${'c' + i})`;
+    }
   }
   const results = await all`SELECT * FROM todos`;
-  console.assert(results.length === 3, 'expected results');
+  console.assert(results.length === 900, 'expected results');
   const result = await get`SELECT * FROM todos`;
-  console.assert(JSON.stringify(result) === '{"id":1,"value":"a"}', 'expected result');
+  console.assert(JSON.stringify(result) === '{"id":1,"value":"a0"}', 'expected result');
   try {
     await all`GET value FROM shenanigans`;
   }

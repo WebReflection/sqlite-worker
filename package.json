@@ -5,7 +5,7 @@
   "main": "./cjs/index.js",
   "scripts": {
     "build": "npm run import && npm run cjs && npm run rollup:es",
-    "import": "terser node_modules/sql.js/dist/sql-wasm-debug.js -m -o esm/sql-wasm.js && sed -i 's/module=undefined;/var module=void 0;/' esm/sql-wasm.js && echo ';export default initSqlJs;' >> esm/sql-wasm.js",
+    "import": "cp node_modules/sql.js/dist/sql-wasm-debug.wasm esm/ && terser node_modules/sql.js/dist/sql-wasm-debug.js -m -o esm/sql-wasm.js && sed -i 's/module=undefined;/self.module=undefined;/' esm/sql-wasm.js && echo ';export default initSqlJs;' >> esm/sql-wasm.js",
     "cjs": "ascjs --no-default esm cjs",
     "rollup:es": "rollup --config rollup/es.config.js && sed -i.bck 's/^var /self./' es.js && rm -rf es.js.bck"
   },

@@ -8,11 +8,15 @@ const {assign} = Object;
 
 const opener = (name, version = 1) => new Promise((resolve, onerror) => {
   assign(indexedDB.open(name, version), {
-    onupgradeneeded({target: {result}}) {
+    onupgradeneeded({target: {result, transaction}}) {
       if (!result.objectStoreNames.contains(STORE))
         result.createObjectStore(STORE)
               .createIndex(keyPath, keyPath, {unique: true});
-      resolve(result);
+      assign(transaction, {
+        oncomplete() {
+          resolve(result);
+        }
+      });
     },
     onsuccess({target: {result}}) {
       resolve(result);
@@ -22,14 +26,16 @@ const opener = (name, version = 1) => new Promise((resolve, onerror) => {
 });
 
 export const init = (options = {}) => new Promise((resolve, onerror) => {
+  // const {url} = import.meta;
+  const dir = options.dir || 'https://sql.js.org/dist'; // url.slice(0, url.lastIndexOf('/'));
   Promise.all([
     opener(options.name || 'sqlite-worker'),
     initSqlJs({
-      locateFile: file => (options.dir || 'https://sql.js.org/dist') + '/' + file
+      locateFile: file => dir + '/' + file
     })
   ]).then(
-      ([idb, {Database}]) => {
-      const store = how => idb.transaction([STORE], how).objectStore(STORE);
+      ([iDB, {Database}]) => {
+      const store = how => iDB.transaction([STORE], how).objectStore(STORE);
       assign(store('readonly').get(keyPath), {
         onsuccess() {
           let queue = Promise.resolve();
