@@ -1,3 +1,9 @@
+const info = whichOne => {
+  document.body.appendChild(
+    document.createElement('p')
+  ).textContent = whichOne;
+};
+
 export default async ({all, get, query, raw}) => {
   await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM todos`;
@@ -14,21 +20,25 @@ export default async ({all, get, query, raw}) => {
   console.assert(JSON.stringify(result) === '{"id":1,"value":"a0"}', 'expected result');
   try {
     await all`GET value FROM shenanigans`;
+    info('Failed');
   }
   catch (o_O) {
     console.log('expected all failure', o_O);
   }
   try {
     await get`GET value FROM shenanigans`;
+    info('Failed');
   }
   catch (o_O) {
     console.log('expected get failure', o_O);
   }
   try {
     await query`UPDATE shenanigans SET a = 1`;
+    info('Failed');
   }
   catch (o_O) {
     console.log('expected query failure', o_O);
   }
   console.log('OK');
+  info('OK');
 };
