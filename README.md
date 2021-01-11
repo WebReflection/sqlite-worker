@@ -1,6 +1,6 @@
 # sqlite-worker
 
-<sup>**Social Media Photo by [benjamin lehman](https://unsplash.com/@benjaminlehman) on [Unsplash](https://unsplash.com/)**</sup>
+<sup>**Social Media Photo by [Alexander Sinn](https://unsplash.com/@swimstaralex) on [Unsplash](https://unsplash.com/)**</sup>
 
 A simple, and persistent, SQLite database for Web and Workers, based on [sql.js](https://github.com/sql-js/sql.js#readme) and [sqlite-tag](https://github.com/WebReflection/sqlite-tag#readme).
 
