@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sqlite-worker test</title>
+  <script type="module">
+  const loadDependencies = Promise.all([
+    import('../../dist/index.js'),
+    import('./index.js')
+  ]);
+  loadDependencies.then(([{init}, {default: test}]) => {
+    init({name: 'sqlite-worker-test-init'}).then(test);
+  });
+  loadDependencies.then(([{SQLiteWorker}, {default: test}]) => {
+    SQLiteWorker({name: 'sqlite-worker-test-worker'}).then(test);
+  });
+  </script>
+</head>
+<body>
+  Check the console, it should end with 2 OKs.
+</body>
+</html>

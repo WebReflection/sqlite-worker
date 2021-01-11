@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>sqlite-worker</title>
+  <script type="module">
+  import('../../dist/index.js').then(({SQLiteWorker}) => {
+    SQLiteWorker({name: 'test-db'}).then(async ({all, get, query}) => {
+      await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+      const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+      if (total < 1) {
+        console.log('Inserting some value');
+        await query`INSERT INTO todos (value) VALUES (${'a'})`;
+        await query`INSERT INTO todos (value) VALUES (${'b'})`;
+        await query`INSERT INTO todos (value) VALUES (${'c'})`;
+      }
+      console.table(await all`SELECT * FROM todos`);
+    });
+  });
+  </script>
+</head>
+<body></body>
+</html>

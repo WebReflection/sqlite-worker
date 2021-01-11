@@ -6,40 +6,105 @@ A simple, and persistent, SQLite database for Web and Workers, based on [sql.js]
 
 
 
-### ⚠ Warning about Workers
+## How to use this module
 
-Obviously I was too naive to believe I could `import(...)` modules in 2021 inside workers too, but [the reality is different](https://stackoverflow.com/a/45578811/2800218):
+The most important thing for this module to work, is being able to reach its pre-built, and pre-optimized files, via its own [dist](./dist/) folder.
 
-  * **Chrome** works without any issue whatsoever as *Worker* from the main thread, but *Service Worker* apparently cannot `import(...)` anything
-  * **Firefox** never had a dynamic `import`, or even static, I believe, so *Worker* here won't work
-  * **WebKit** has issues since 2016 too
-
-This means that while this module recommendation is to use its *SQLiteWorker* export, or to use the directly its *init* export via *Service Worker*, none of these recommendation actually work as expected, so that for a cross browser experience, using the *init* export from the main thread is the only option.
-
-Please note the *WASM* module *should* also offload from the main thread, but the thing is that I'd love for browsers to fix their inconsistencies regarding ES Modules and remove this whole warning session once they do.
+The resolution is done automatically, whenever this modules is imported via native *ESM*, but due to [a long standing bug](https://stackoverflow.com/a/45578811/2800218) that involves both *Web* and *Service* *Workers* across browsers, such `dist` folder *must* be specified manually, whenever this module is used directly within either a *Service Worker*, or a generic *Web Worker*.
 
 
 
-## How to import this module
+### Importing on Web pages via ESM
 
-This module is pre-bundled in a way it should work, and survive, 3rd party tools, but it needs to be able to reach its own `dist` folder.
+In any generic page, it is possible to import this module via native *ESM* with, or without, the help of a *CDN*:
 
-Accordingly, the easiest way to use this module is the following:
+```html
+<script type="module">
+// no ?module needed, it's the main export in unpkg
+import {SQLiteWorker} from '//unpkg.com/sqlite-worker';
+
+SQLiteWorker({name: 'my-db'}).then(async ({all, get, query}) => {
+  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  if (total < 1) {
+    console.log('Inserting some value');
+    await query`INSERT INTO todos (value) VALUES (${'a'})`;
+    await query`INSERT INTO todos (value) VALUES (${'b'})`;
+    await query`INSERT INTO todos (value) VALUES (${'c'})`;
+  }
+  console.log(await all`SELECT * FROM todos`);
+});
+</script>
+```
+
+If the current [dist](./dist/) folder is pre-installed though, `import {SQLiteWorker} from './js/sqlite-worker/dist/index.js';` would work too.
+
+While above example would run *sqlite-worker* through a *Web Worker*, which is recommended, it is also possible to bootstrap this module right away in the main thread.
+
+```html
+<script type="module">
+// no ?module needed, it's the main export in unpkg
+import {init} from '//unpkg.com/sqlite-worker';
+
+init({name: 'my-db'}).then(async ({all, get, query}) => {
+  // ... same code as before ...
+});
+</script>
+```
+
+Beside being slightly faster, avoiding the worker `postMessage` dance, the main difference between `SQLiteWorker` and `init` is that `init` accepts an extra **update** option, that could be used to synchronize remotely the local database, whenever it's needed.
 
 ```js
-// note: no ?module needed, this is already exported as ESM
-import {init, SQLiteWorker} from '//unpkg.com/sqlite-worker';
+import {init} from 'sqlite-worker';
 
-// either direct init([options])
-// or use SQLiteWorker with defaults (Chrome only)
-SQLiteWorker({name: 'my-db'}).then(() => {
-  console.log('ready');
+init({name: 'my-db', update(uInt8Array) {
+  // store the latest uInt8Array somewhere
+}});
+```
+
+The very same stored buffer could be used in the future to start from last stored update in case the client erased its data (changed phone, IndexedDB cleared data, etc.).
+
+This functionality could also be used in a *Service Worker*, but the initialization in there would be slightly different.
+
+
+
+### Importing on both Web and Service Worker
+
+Instead of `import`, we must use `importScripts` to have cross browser compatibility, but this is not an issue, as this module provides, through its [dist](./dist/) folder, everything needed to do so, as long as such folder is reachable:
+
+```js
+// will add a `sqliteWorker` global initiator
+importScripts('../../dist/sw.js');
+
+sqliteWorker({
+  // **IMPORTANT**
+  dist: '/js/sqlite-worker/dist',
+  name: 'my-db'
+}).then(async ({all, get, query}) => {
+  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  if (total < 1) {
+    console.log('Inserting some value');
+    await query`INSERT INTO todos (value) VALUES (${'a'})`;
+    await query`INSERT INTO todos (value) VALUES (${'b'})`;
+    await query`INSERT INTO todos (value) VALUES (${'c'})`;
+  }
+  console.table(await all`SELECT * FROM todos`);
 });
 ```
 
-Options defaults, such as `dir` and `library`, or even the `Worker` path, are all resolved automatically, as long as all `dist` files are reachable.
+The **dist** option could also be used from generic pages, but usually with `import.meta.url` such information can be easily, automatically, retrieved by the module itself.
 
-It is, however, possible to change these configurations.
+
+#### ℹ About Bundlers
+
+Because of its own folder dependencies, including the *WASM* file, and the module, needed to bootstripe SQLite 3, importing this module via bundlers *might* break its actual execution if:
+
+  * all files are not also included in the bundle folder
+  * the bundler transform `import.meta.url` is a "*too smart*" way, breaking its native functionality
+  * something else some bundler might do
+
+However, as previously mentioned, if the `dist` option is provided, everything *should* be fine, even if bundled.
 
 
 
@@ -48,6 +113,7 @@ It is, however, possible to change these configurations.
 Both `init([options])` and `SQLiteWorker([options])` optionally accept a configuration/options object with the following fields:
 
   * **name**: the persistent database name. By default it's the *string* `'sqlite-worker'`
+  * **dist**: the folder, as *string*, containing [all distribution files of this module](./dist/). This is resolved automatically on pages that are not workers, but it must be provided within workers.
   * **database**: an initial SQLite database, as `Uint8Array` instance. This is used only the very first time, and it fallbacks to `new Uint8Array(0)`.
   * **timeout**: minimum interval, in milliseconds, between saves, to make storing, and exporting, the database, less greedy. By default it's the *number* `250`.
 
@@ -59,7 +125,6 @@ These options work only with direct initialization, so either in the main thread
   * **update**: a *function* that receives latest version of the database, as `Uint8Array`, whenever some query executed an `INSERT`, a `DELETE`, or an `UPDATE`.
 
 
-
 #### SQLiteWorker Extra Options
 
 These options work only with `SQLiteWorker` initialization.
@@ -68,17 +133,7 @@ These options work only with `SQLiteWorker` initialization.
 
 
 
-#### Extra Options
-
-These options are resolved by default internally to find the right files. Change these options only if you know what you are doing.
-
-  * **dir**: where to find `sql.js` files. By default it's the current module folder plus `/../sqlite`.
-  * **library**: where to find the `sqlite-worker` library itself. By default is wherever the module has been exported.
-
-
-
-
-### Module exports
+### After Initialization Helpers
 
 Both `init(...)` and `SQLiteWorker(...)` resolves with the [sqlite-tag API](https://github.com/WebReflection/sqlite-tag#api), except for the `raw` utility, which is not implemented via the *Worker* interface, but it's exported within the `init(...)`, as it requires a special instance that won't survive `postMessage` dance.
 
@@ -92,57 +147,8 @@ All tags are *asynchronous*, so that it's possible to *await* their result.
 
 
 
-### Direct usage
-
-This is currently the cross browser way to use this module, and it won't work within a *Service Worker* until Chrome fixes its bug.
-
-```js
-import {init} from 'sqlite-worker';
-
-// init([options])
-init({name: 'my-db'}).then(async ({all, get, query}) => {
-  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
-  if (total < 1) {
-    console.log('Inserting some value');
-    await query`INSERT INTO todos (value) VALUES (${'a'})`;
-    await query`INSERT INTO todos (value) VALUES (${'b'})`;
-    await query`INSERT INTO todos (value) VALUES (${'c'})`;
-  }
-  console.log(await all`SELECT * FROM todos`);
-});
-```
-
-
-
-### Worker usage (Chrome only)
-
-This module can also be used as *Worker*, which is a recommendation where the browser is compatible.
-
-If specified, you can pass your own worker via the `worker` option, but by default, this module can be initialized as such:
-
-```js
-import {SQLiteWorker} from 'sqlite-worker';
-
-// SQLiteWorker([options])
-SQLiteWorker({name: 'my-db'})
-  .then(async ({all, get, query}) => {
-    await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-    const {total} = await get`SELECT COUNT(id) as total FROM todos`;
-    if (total < 1) {
-      console.log('Inserting some value');
-      await query`INSERT INTO todos (value) VALUES (${'a'})`;
-      await query`INSERT INTO todos (value) VALUES (${'b'})`;
-      await query`INSERT INTO todos (value) VALUES (${'c'})`;
-    }
-    console.log(await all`SELECT * FROM todos`);
-  });
-```
-
-
-
 ## Compatibility
 
-This module requires a browser compatible with *WASM* and dynamic `import(...)`. This module won't work in old Edge or IE, as these don't even know what's a *Service Worker*.
+This module requires a browser compatible with *WASM* and native *ESM* `import`.
 
-Please note if you bundle this module there are chances it might not work as expected, as it needs to import *WASM* and other files at runtime, and bundlers might not give it a chance to find these files. Keep the `dist` folder as it is, and import this module from it.
+This module won't work in old Edge or IE.
