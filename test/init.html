@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>sqlite-worker</title>
   <script type="module">
-  import('../esm/init.js').then(({init}) => {
+  import('../dist/index.js').then(({init}) => {
     init({name: 'test-db'}).then(async ({all, get, query, raw}) => {
       await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
       const {total} = await get`SELECT COUNT(id) as total FROM todos`;
