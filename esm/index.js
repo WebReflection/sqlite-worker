@@ -33,7 +33,13 @@ export function SQLiteWorker(options) {
         resolve(result);
     }
   });
-  return post('init', assign({library: base + '/init.js'}, options)).then(() => ({
+  return post(
+    'init',
+    assign(
+      {library: base + '/init.js'},
+      assign({dist: base}, options)
+    )
+  ).then(() => ({
     all: query('all'),
     get: query('get'),
     query: query('query')
