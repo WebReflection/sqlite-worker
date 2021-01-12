@@ -35,10 +35,7 @@ export function SQLiteWorker(options) {
   });
   return post(
     'init',
-    assign(
-      {library: base + '/init.js'},
-      assign({dist: base}, options)
-    )
+    assign({dist: base, library: base + '/init.js'}, options)
   ).then(() => ({
     all: query('all'),
     get: query('get'),
