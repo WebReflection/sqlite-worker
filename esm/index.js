@@ -2,13 +2,18 @@ import {assign, dist} from './utils.js';
 
 const cache = new Map;
 
+const workerURL = url => URL.createObjectURL(
+  new Blob([`importScripts('${url}')`], {type: 'text/javascript'})
+);
+
 let ids = 0;
 
 export {init} from './init.js';
 
 export function SQLiteWorker(options) {
-  const base = options.dist || dist;
   const {credentials} = options;
+  const base = options.dist || dist;
+  const url = options.worker || (base + '/worker.js');
   const query = how => (template, ...values) => post(how, {template, values});
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
@@ -16,8 +21,7 @@ export function SQLiteWorker(options) {
     worker.postMessage({id, action, options});
   });
   const worker = assign(new Worker(
-    options.worker ||
-    (base + '/worker.js'),
+    /^(?:\.|\/)/.test(url) ? url : workerURL(url),
     {credentials}
   ), {
     onmessage({data: {id, result, error}}) {
