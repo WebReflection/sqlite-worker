@@ -6,7 +6,7 @@ export const dist = isWorker ? '.' : import.meta.url.replace(/\/[^/]*$/, '');
 
 // a dynamic import(...) would've been better but Web platform happens:
 // https://stackoverflow.com/questions/44118600/web-workers-how-to-import-modules/45578811#45578811
-export const load = src => new Promise(resolve => {
+export const load = src => new Promise((resolve, onerror) => {
   const onload = () => {
     const module = self.module.exports;
     delete self.exports;
@@ -31,6 +31,7 @@ export const load = src => new Promise(resolve => {
           head.removeChild(this);
           onload();
         },
+        onerror,
         src
       }
     );

@@ -8,7 +8,7 @@ exports.dist = dist;
 
 // a dynamic import(...) would've been better but Web platform happens:
 // https://stackoverflow.com/questions/44118600/web-workers-how-to-import-modules/45578811#45578811
-const load = src => new Promise(resolve => {
+const load = src => new Promise((resolve, onerror) => {
   const onload = () => {
     const module = self.module.exports;
     delete self.exports;
@@ -33,6 +33,7 @@ const load = src => new Promise(resolve => {
           head.removeChild(this);
           onload();
         },
+        onerror,
         src
       }
     );
