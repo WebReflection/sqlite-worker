@@ -154,3 +154,5 @@ This module requires a browser compatible with *WASM* and native *ESM* `import`.
 This module won't work in old Edge or IE.
 
 **[Live Demo](https://webreflection.github.io/sqlite-worker/test/)** - please note if you read two *OK* after the list of expected errors (due code coverage) it means everything is fine and your browser works as expected.
+
+**[CodePen](https://codepen.io/WebReflection/pen/NWROrom?editors=0010)** - will show the table result as JSON in the body.
