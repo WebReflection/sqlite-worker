@@ -23,7 +23,10 @@ In any generic page, it is possible to import this module via native *ESM* with,
 // no ?module needed, it's the main export in unpkg
 import {SQLiteWorker} from '//unpkg.com/sqlite-worker';
 
-SQLiteWorker({name: 'my-db'}).then(async ({all, get, query}) => {
+SQLiteWorker({
+  dist: '//unpkg.com/sqlite-worker/dist',
+  name: 'my-db'
+}).then(async ({all, get, query}) => {
   await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM todos`;
   if (total < 1) {
@@ -77,7 +80,6 @@ Instead of `import`, we must use `importScripts` to have cross browser compatibi
 importScripts('../../dist/sw.js');
 
 sqliteWorker({
-  // **IMPORTANT**
   dist: '/js/sqlite-worker/dist',
   name: 'my-db'
 }).then(async ({all, get, query}) => {
