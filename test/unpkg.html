@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script type="module">
-  import {SQLiteWorker} from '//unpkg.com/sqlite-worker';
+  import {SQLiteWorker} from 'https://unpkg.com/sqlite-worker';
 
   SQLiteWorker({name: 'test-db'}).then(async ({all, get, query}) => {
     await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;

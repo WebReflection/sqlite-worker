@@ -8,6 +8,7 @@ export {init} from './init.js';
 
 export function SQLiteWorker(options) {
   const base = options.dist || dist;
+  const {credentials} = options;
   const query = how => (template, ...values) => post(how, {template, values});
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
@@ -16,7 +17,8 @@ export function SQLiteWorker(options) {
   });
   const worker = assign(new Worker(
     options.worker ||
-    (base + '/worker.js')
+    (base + '/worker.js'),
+    {credentials}
   ), {
     onmessage({data: {id, result, error}}) {
       const {resolve, reject} = cache.get(id);

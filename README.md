@@ -130,6 +130,7 @@ These options work only with direct initialization, so either in the main thread
 These options work only with `SQLiteWorker` initialization.
 
   * **worker**: the *string* path where the *JS* worker to use is located. By default, this is the [dist/worker.js](./dist/worker.js) file, which is a pre-optimized version of [this source](./esm/worker.js).
+  * **credentials**: the optional credentials *string* between `omit`, `same-origin`, or `include`, defaulting to `omit`, or better, undefined credentials.
 
 
 
