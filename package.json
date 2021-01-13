@@ -44,6 +44,10 @@
       "import": "./esm/init.js",
       "default": "./cjs/init.js"
     },
+    "./sqlite-worker": {
+      "import": "./esm/sqlite-worker.js",
+      "default": "./cjs/sqlite-worker.js"
+    },
     "./sw": {
       "import": "./dist/sw.js",
       "default": "./dist/sw.js"

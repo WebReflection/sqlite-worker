@@ -80,7 +80,7 @@ Instead of `import`, we must use `importScripts` to have cross browser compatibi
 importScripts('../../dist/sw.js');
 
 /* ⚠ IMPORTANT ⚠ */
-const dist = '/js/sqlite-worker/dist';
+const dist = '../../dist/';
 
 sqliteWorker({dist, name: 'my-db'})
   .then(async ({all, get, query}) => {
