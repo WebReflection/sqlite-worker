@@ -23,20 +23,19 @@ In any generic page, it is possible to import this module via native *ESM* with,
 // no ?module needed, it's the main export in unpkg
 import {SQLiteWorker} from '//unpkg.com/sqlite-worker';
 
-SQLiteWorker({
-  dist: '//unpkg.com/sqlite-worker/dist',
-  name: 'my-db'
-}).then(async ({all, get, query}) => {
-  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
-  if (total < 1) {
-    console.log('Inserting some value');
-    await query`INSERT INTO todos (value) VALUES (${'a'})`;
-    await query`INSERT INTO todos (value) VALUES (${'b'})`;
-    await query`INSERT INTO todos (value) VALUES (${'c'})`;
-  }
-  console.log(await all`SELECT * FROM todos`);
-});
+// `dist` option resolved automatically via import.meta.url
+SQLiteWorker({name: 'my-db'})
+  .then(async ({all, get, query}) => {
+    await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+    const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+    if (total < 1) {
+      console.log('Inserting some value');
+      await query`INSERT INTO todos (value) VALUES (${'a'})`;
+      await query`INSERT INTO todos (value) VALUES (${'b'})`;
+      await query`INSERT INTO todos (value) VALUES (${'c'})`;
+    }
+    console.log(await all`SELECT * FROM todos`);
+  });
 </script>
 ```
 
@@ -49,6 +48,7 @@ While above example would run *sqlite-worker* through a *Web Worker*, which is r
 // no ?module needed, it's the main export in unpkg
 import {init} from '//unpkg.com/sqlite-worker';
 
+// `dist` option resolved automatically via import.meta.url
 init({name: 'my-db'}).then(async ({all, get, query}) => {
   // ... same code as before ...
 });
@@ -65,34 +65,35 @@ init({name: 'my-db', update(uInt8Array) {
 }});
 ```
 
-The very same stored buffer could be used in the future to start from last stored update in case the client erased its data (changed phone, IndexedDB cleared data, etc.).
+The very same stored buffer could be used in the future to start from last stored update, in case the client erased its data (changed phone, IndexedDB cleared data, etc.).
 
 This functionality could also be used in a *Service Worker*, but the initialization in there would be slightly different.
 
 
 
-### Importing on both Web and Service Worker
+### Importing on Service Worker
 
 Instead of `import`, we must use `importScripts` to have cross browser compatibility, but this is not an issue, as this module provides, through its [dist](./dist/) folder, everything needed to do so, as long as such folder is reachable:
 
 ```js
-// will add a `sqliteWorker` global initiator
+// will add a `sqliteWorker` "global" initiator
 importScripts('../../dist/sw.js');
 
-sqliteWorker({
-  dist: '/js/sqlite-worker/dist',
-  name: 'my-db'
-}).then(async ({all, get, query}) => {
-  await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
-  if (total < 1) {
-    console.log('Inserting some value');
-    await query`INSERT INTO todos (value) VALUES (${'a'})`;
-    await query`INSERT INTO todos (value) VALUES (${'b'})`;
-    await query`INSERT INTO todos (value) VALUES (${'c'})`;
-  }
-  console.table(await all`SELECT * FROM todos`);
-});
+/* ⚠ IMPORTANT ⚠ */
+const dist = '/js/sqlite-worker/dist';
+
+sqliteWorker({dist, name: 'my-db'})
+  .then(async ({all, get, query}) => {
+    await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
+    const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+    if (total < 1) {
+      console.log('Inserting some value');
+      await query`INSERT INTO todos (value) VALUES (${'a'})`;
+      await query`INSERT INTO todos (value) VALUES (${'b'})`;
+      await query`INSERT INTO todos (value) VALUES (${'c'})`;
+    }
+    console.table(await all`SELECT * FROM todos`);
+  });
 ```
 
 The **dist** option could also be used from generic pages, but usually with `import.meta.url` such information can be easily, automatically, retrieved by the module itself.
@@ -115,7 +116,7 @@ However, as previously mentioned, if the `dist` option is provided, everything *
 Both `init([options])` and `SQLiteWorker([options])` optionally accept a configuration/options object with the following fields:
 
   * **name**: the persistent database name. By default it's the *string* `'sqlite-worker'`
-  * **dist**: the folder, as *string*, containing [all distribution files of this module](./dist/). This is resolved automatically on pages that are not workers, but it must be provided within workers.
+  * **dist**: the folder, as *string*, containing [all distribution files of this module](./dist/). This is resolved automatically on pages that are not workers, but it must be provided within workers when `importScripts` is used instead.
   * **database**: an initial SQLite database, as `Uint8Array` instance. This is used only the very first time, and it fallbacks to `new Uint8Array(0)`.
   * **timeout**: minimum interval, in milliseconds, between saves, to make storing, and exporting, the database, less greedy. By default it's the *number* `250`.
 
@@ -138,7 +139,7 @@ These options work only with `SQLiteWorker` initialization.
 
 ### After Initialization Helpers
 
-Both `init(...)` and `SQLiteWorker(...)` resolves with the [sqlite-tag API](https://github.com/WebReflection/sqlite-tag#api), except for the `raw` utility, which is not implemented via the *Worker* interface, but it's exported within the `init(...)`, as it requires a special instance that won't survive `postMessage` dance.
+Both `init(...)` and `SQLiteWorker(...)` resolves with the [sqlite-tag API](https://github.com/WebReflection/sqlite-tag#api), except for the `raw` utility, which is not implemented via the *Worker* interface, as it requires a special instance that won't survive `postMessage` dance, but it's exported within the direct `init(...)`, hence in the main thread or via *Service Worker*.
 
 The API in a nutshell is:
 
@@ -158,4 +159,4 @@ This module won't work in old Edge or IE.
 
 **[Live Demo](https://webreflection.github.io/sqlite-worker/test/)** - please note if you read two *OK* after the list of expected errors (due code coverage) it means everything is fine and your browser works as expected.
 
-**[CodePen](https://codepen.io/WebReflection/pen/NWROrom?editors=0010)** - will show the table result as JSON in the body.
+**[CodePen](https://codepen.io/WebReflection/pen/NWROrom?editors=0010)** - will show the table result, as JSON, in the body.
