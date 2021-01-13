@@ -10,7 +10,7 @@ let ids = 0;
 
 export {init} from './init.js';
 
-export function SQLiteWorker(options) {
+export function SQLiteWorker(options = {}) {
   const {credentials} = options;
   const base = options.dist || dist;
   const url = options.worker || (base + '/worker.js');

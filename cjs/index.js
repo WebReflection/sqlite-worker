@@ -13,7 +13,7 @@ let ids = 0;
   exports.init = m.init;
 })(require('./init.js'));
 
-function SQLiteWorker(options) {
+function SQLiteWorker(options = {}) {
   const {credentials} = options;
   const base = options.dist || dist;
   const url = options.worker || (base + '/worker.js');
