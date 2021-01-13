@@ -17,19 +17,15 @@ const retrieve = (db, method, id, {template, values}) => {
 };
 
 addEventListener('message', ({data: {id, action, options}}) => {
-  switch (action) {
-    case 'init':
-      if (!db)
-        db = load(options.library).then(({init}) => init(options));
-      return db.then(
-        () => postMessage({id, result: 'OK'}),
-        ({message: error}) => postMessage({id, error})
-      );
-    case 'all':
-      return retrieve(db, 'all', id, options);
-    case 'get':
-      return retrieve(db, 'get', id, options);
-    case 'query':
-      return retrieve(db, 'query', id, options);
+  if (action === 'init') {
+    if (!db)
+      db = load(options.library).then(({init}) => init(options));
+    db.then(
+      () => postMessage({id, result: 'OK'}),
+      ({message: error}) => postMessage({id, error})
+    );
   }
+  // all, get, query do the same
+  else
+    retrieve(db, action, id, options);
 });
