@@ -77,10 +77,10 @@ Instead of `import`, we must use `importScripts` to have cross browser compatibi
 
 ```js
 // will add a `sqliteWorker` "global" initiator
-importScripts('../../dist/sw.js');
+importScripts('./dist/sw.js');
 
 /* ⚠ IMPORTANT ⚠ */
-const dist = '../../dist/';
+const dist = './dist/';
 
 sqliteWorker({dist, name: 'my-db'})
   .then(async ({all, get, query}) => {
@@ -149,6 +149,57 @@ The API in a nutshell is:
 
 All tags are *asynchronous*, so that it's possible to *await* their result.
 
+
+
+### Extra Initialization Helpers
+
+The `sqlite-worker/tables` export helps defining, or modifying, tables at runtime, without needing to write complex logic, or queries.
+
+All it's needed, is a `tables` property that describe the table name and its fields, handled via [sqlite-tables-handler](https://github.com/WebReflection/sqlite-tables-handler#readme), before returning all module helpers.
+
+```js
+import {init, SQLiteWorker} from 'sqlite-worker/tables';
+
+init({
+  name: 'test-db',
+  // the tables schema
+  tables: {
+    todos: {
+      id: 'INTEGER PRIMARY KEY',
+      value: 'TEXT'
+    }
+  }
+}).then(async ({all, get, query, raw}) => {
+  const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  if (total < 1) {
+    console.log('Inserting some value');
+    await query`INSERT INTO todos (value) VALUES (${'a'})`;
+    await query`INSERT INTO todos (value) VALUES (${'b'})`;
+    await query`INSERT INTO todos (value) VALUES (${'c'})`;
+  }
+  console.table(await all`SELECT * FROM todos`);
+});
+```
+
+For *Service Worker* one must use the `dist/sw-tables.js` file instead of `dist/sw.js`.
+
+```js
+importScripts('./dist/sw-tables.js');
+
+sqliteWorker({
+  dist: './dist',
+  name: 'my-db',
+  tables: {
+    todos: {
+      id: 'INTEGER PRIMARY KEY',
+      value: 'TEXT'
+    }
+  }
+})
+  .then(async ({all, get, query}) => {
+    // ...
+  });
+```
 
 
 ## Compatibility
