@@ -4,13 +4,15 @@
   "description": "A simple, and persistent, SQLite database for Web and Workers",
   "main": "./cjs/index.js",
   "scripts": {
-    "build": "npm run import && npm run cjs && npm run rollup:es && npm run rollup:init && npm run rollup:sw && npm run rollup:worker",
+    "build": "npm run import && npm run cjs && npm run rollup:es && npm run rollup:init && npm run rollup:sw && npm run rollup:sw-tables && npm run rollup:tables && npm run rollup:worker",
     "import": "cp node_modules/sql.js/dist/sql-wasm.{js,wasm} dist/",
     "cjs": "ascjs --no-default esm cjs && npm run cjs:fix",
     "cjs:fix": "sed -i 's/{url:[^}]*}/{url: __filename}/' cjs/utils.js",
     "rollup:es": "rollup --config rollup/es.config.js",
     "rollup:init": "rollup --config rollup/init.config.js && sed -i 's/const dist = .*/const dist = \".\";/' dist/tmp.js && terser dist/tmp.js --module -c -m -o dist/init.js && rm dist/tmp.js",
-    "rollup:sw": "rollup --config rollup/sw.config.js && sed -i 's/exports.init =/return/; s/var sqliteWorker =/self.sqliteWorker =/' dist/tmp.js && terser dist/tmp.js -c -m -o dist/sw.js && rm dist/tmp.js",
+    "rollup:sw": "rollup --config rollup/sw.config.js && sed -i 's/const dist = .*/const dist = \".\";/; s/exports.init =/return/; s/var sqliteWorker =/self.sqliteWorker =/' dist/tmp.js && terser dist/tmp.js  -c -m -o dist/sw.js && rm dist/tmp.js",
+    "rollup:sw-tables": "rollup --config rollup/sw-tables.config.js && sed -i 's/const dist = .*/const dist = \".\";/; s/exports.init =/return/; s/var sqliteWorker =/self.sqliteWorker =/' dist/tmp.js && terser dist/tmp.js  -c -m -o dist/sw-tables.js && rm dist/tmp.js",
+    "rollup:tables": "rollup --config rollup/tables.config.js",
     "rollup:worker": "rollup --config rollup/worker.config.js && sed -i 's/const dist = .*//' dist/tmp.js && terser dist/tmp.js -c -m -o dist/worker.js && rm dist/tmp.js"
   },
   "keywords": [
@@ -52,6 +54,14 @@
       "import": "./dist/sw.js",
       "default": "./dist/sw.js"
     },
+    "./sw-tables": {
+      "import": "./dist/sw-tables.js",
+      "default": "./dist/sw-tables.js"
+    },
+    "./tables": {
+      "import": "./dist/tables.js",
+      "default": "./dist/tables.js"
+    },
     "./worker": {
       "import": "./esm/worker.js",
       "default": "./cjs/worker.js"
@@ -68,6 +78,7 @@
   },
   "homepage": "https://github.com/WebReflection/sqlite-worker-#readme",
   "dependencies": {
+    "sqlite-tables-handler": "^0.2.0",
     "sqlite-tag": "^1.1.0"
   }
 }
