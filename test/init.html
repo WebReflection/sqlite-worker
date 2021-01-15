@@ -15,6 +15,9 @@
         await query`INSERT INTO todos (value) VALUES (${'b'})`;
         await query`INSERT INTO todos (value) VALUES (${'c'})`;
       }
+      const {id} = await get`SELECT last_insert_rowid() AS id`;
+      if (id)
+        console.log(`last inserted row id is: ${id}`);
       console.table(await all`SELECT * FROM todos`);
     });
   });
