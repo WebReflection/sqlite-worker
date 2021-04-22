@@ -1,5 +1,5 @@
 'use strict';
-const tables = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('sqlite-tables-handler'));
+const tables = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ignore stop */)(require('sqlite-tables-handler'));
 
 const sqlite3 = ({all, query}) => ({
   all(sql, callback) {

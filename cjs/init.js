@@ -1,5 +1,5 @@
 'use strict';
-const SQLiteTag = (m => m.__esModule ? /* istanbul ignore next */ m.default : /* istanbul ignore next */ m)(require('sqlite-tag'));
+const SQLiteTag = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ignore stop */)(require('sqlite-tag'));
 const {assign, dist, load} = require('./utils.js');
 
 const STORE = 'sqlite';
