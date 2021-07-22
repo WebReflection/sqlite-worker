@@ -106,7 +106,7 @@ The **dist** option could also be used from generic pages, but usually with `imp
 Because of its own folder dependencies, including the *WASM* file, and the module, needed to bootstripe SQLite 3, importing this module via bundlers *might* break its actual execution if:
 
   * all files are not also included in the bundle folder
-  * the bundler transform `import.meta.url` is a "*too smart*" way, breaking its native functionality
+  * the bundler transform `import.meta.url` in a "*too smart*" way, breaking its native functionality
   * something else some bundler might do
 
 However, as previously mentioned, if the `dist` option is provided, everything *should* be fine, even if bundled.
