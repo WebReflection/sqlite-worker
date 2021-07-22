@@ -25,16 +25,17 @@ import {SQLiteWorker} from '//unpkg.com/sqlite-worker';
 
 // `dist` option resolved automatically via import.meta.url
 SQLiteWorker({name: 'my-db'})
-  .then(async ({all, get, query}) => {
-    await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-    const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  .then(async ({all, get, query, raw}) => {
+    const table = raw`todos`;
+    await query`CREATE TABLE IF NOT EXISTS ${table} (id INTEGER PRIMARY KEY, value TEXT)`;
+    const {total} = await get`SELECT COUNT(id) as total FROM ${table}`;
     if (total < 1) {
       console.log('Inserting some value');
-      await query`INSERT INTO todos (value) VALUES (${'a'})`;
-      await query`INSERT INTO todos (value) VALUES (${'b'})`;
-      await query`INSERT INTO todos (value) VALUES (${'c'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'a'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'b'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'c'})`;
     }
-    console.log(await all`SELECT * FROM todos`);
+    console.log(await all`SELECT * FROM ${table}`);
   });
 </script>
 ```
@@ -49,7 +50,7 @@ While above example would run *sqlite-worker* through a *Web Worker*, which is r
 import {init} from '//unpkg.com/sqlite-worker';
 
 // `dist` option resolved automatically via import.meta.url
-init({name: 'my-db'}).then(async ({all, get, query}) => {
+init({name: 'my-db'}).then(async ({all, get, query, raw}) => {
   // ... same code as before ...
 });
 </script>
@@ -83,16 +84,17 @@ importScripts('./dist/sw.js');
 const dist = './dist/';
 
 sqliteWorker({dist, name: 'my-db'})
-  .then(async ({all, get, query}) => {
-    await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
-    const {total} = await get`SELECT COUNT(id) as total FROM todos`;
+  .then(async ({all, get, query, raw}) => {
+    const table = raw`todos`;
+    await query`CREATE TABLE IF NOT EXISTS ${table} (id INTEGER PRIMARY KEY, value TEXT)`;
+    const {total} = await get`SELECT COUNT(id) as total FROM ${table}`;
     if (total < 1) {
       console.log('Inserting some value');
-      await query`INSERT INTO todos (value) VALUES (${'a'})`;
-      await query`INSERT INTO todos (value) VALUES (${'b'})`;
-      await query`INSERT INTO todos (value) VALUES (${'c'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'a'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'b'})`;
+      await query`INSERT INTO ${table} (value) VALUES (${'c'})`;
     }
-    console.table(await all`SELECT * FROM todos`);
+    console.table(await all`SELECT * FROM ${table}`);
   });
 ```
 
@@ -139,15 +141,16 @@ These options work only with `SQLiteWorker` initialization.
 
 ### After Initialization Helpers
 
-Both `init(...)` and `SQLiteWorker(...)` resolves with the [sqlite-tag API](https://github.com/WebReflection/sqlite-tag#api), except for the `raw` utility, which is not implemented via the *Worker* interface, as it requires a special instance that won't survive `postMessage` dance, but it's exported within the direct `init(...)`, hence in the main thread or via *Service Worker*.
+Both `init(...)` and `SQLiteWorker(...)` resolves with the [sqlite-tag API](https://github.com/WebReflection/sqlite-tag#api).
 
 The API in a nutshell is:
 
   * **all**: a template literal tag to retrieve all rows that match the query
   * **get**: a template literal tag to retrieve one row that matches the query
   * **query**: a template literal tag to simply query the database (no result returned)
+  * **raw**: a template literal tag to represent static parts of the query (not values)
 
-All tags are *asynchronous*, so that it's possible to *await* their result.
+All tags, except the `raw` helper, are *asynchronous*, so that it's possible to *await* their result.
 
 
 
