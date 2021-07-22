@@ -1,6 +1,9 @@
+import {asStatic, asParams} from 'static-params';
 import {assign, dist} from './utils.js';
 
 const cache = new Map;
+
+const raw = (tpl, ...values) => asStatic(plain(tpl, ...values));
 
 const workerURL = url => URL.createObjectURL(
   new Blob([`importScripts('${url}')`], {type: 'text/javascript'})
@@ -12,7 +15,10 @@ export function SQLiteWorker(options = {}) {
   const {credentials} = options;
   const base = options.dist || dist;
   const url = options.worker || (base + '/worker.js');
-  const query = how => (template, ...values) => post(how, {template, values});
+  const query = how => (template, ...values) => {
+    const [sql, ...params] = asParams(template, ...values);
+    return post(how, {template: sql, values: params});
+  };
   const post = (action, options) => new Promise((resolve, reject) => {
     const id = ids++;
     cache.set(id, {resolve, reject});
@@ -37,6 +43,7 @@ export function SQLiteWorker(options = {}) {
   ).then(() => ({
     all: query('all'),
     get: query('get'),
-    query: query('query')
+    query: query('query'),
+    raw
   }));
 };
