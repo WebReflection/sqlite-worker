@@ -16,7 +16,7 @@ addEventListener('message', ({data: {id, action, options}}) => {
   else {
     const {template, values} = options;
     db.then((module) => {
-      module[action].apply(null, [template].concat(values)).then(
+      module[action](template, ...values).then(
         result => {
           postMessage({id, result});
         },

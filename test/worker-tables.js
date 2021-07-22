@@ -11,7 +11,6 @@ sqliteWorker({
   }
 }).then(async ({all, get, query, raw}) => {
   const table = raw`todos`;
-  await query`CREATE TABLE IF NOT EXISTS ${table} (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM ${table}`;
   if (total < 1) {
     console.log('Inserting some value');
