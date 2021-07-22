@@ -1,3 +1,4 @@
+import plain from 'plain-tag';
 import {asStatic, asParams} from 'static-params';
 import {assign, dist} from './utils.js';
 

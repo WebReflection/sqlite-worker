@@ -1,4 +1,5 @@
 'use strict';
+const plain = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ignore stop */)(require('plain-tag'));
 const {asStatic, asParams} = require('static-params');
 const {assign, dist} = require('./utils.js');
 
