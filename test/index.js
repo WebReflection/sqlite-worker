@@ -4,15 +4,17 @@ const info = whichOne => {
   ).textContent = whichOne;
 };
 
-export default async ({all, get, query, raw}) => {
+export default async ({all, get, query, raw, transaction}) => {
   await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM todos`;
   if (total < 1) {
+    const populate = transaction();
     for (let i = 0; i < 300; i++) {
-      await query`INSERT INTO todos (value) VALUES (${'a' + i})`;
-      await query`INSERT INTO todos (value) VALUES (${'b' + i})`;
-      await query`INSERT INTO todos (value) VALUES (${'c' + i})`;
+      populate`INSERT INTO todos (value) VALUES (${'a' + i})`;
+      populate`INSERT INTO todos (value) VALUES (${'b' + i})`;
+      populate`INSERT INTO todos (value) VALUES (${'c' + i})`;
     }
+    await populate.commit();
   }
   const results = await all`SELECT * FROM todos`;
   console.assert(results.length === 900, 'expected results');

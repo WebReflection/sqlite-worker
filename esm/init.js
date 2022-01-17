@@ -55,7 +55,7 @@ export const init = (options = {}) => new Promise((resolve, onerror) => {
             };
             if (!result)
               save();
-            const {all, get, query, raw} = SQLiteTag({
+            const {all, get, query, raw, transaction} = SQLiteTag({
               all(sql, params, callback) {
                 try {
                   const rows = db.exec(sql, params);
@@ -89,7 +89,7 @@ export const init = (options = {}) => new Promise((resolve, onerror) => {
             });
             let t = 0;
             resolve({
-              all, get, raw,
+              all, get, raw, transaction,
               query(template) {
                 if (/\b(?:INSERT|DELETE|UPDATE)\b/i.test(template[0])) {
                   clearTimeout(t);

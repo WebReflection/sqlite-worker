@@ -84,16 +84,18 @@ importScripts('./dist/sw.js');
 const dist = './dist/';
 
 sqliteWorker({dist, name: 'my-db'})
-  .then(async ({all, get, query, raw}) => {
+  .then(async ({all, get, query, raw, transaction}) => {
     const table = raw`todos`;
     await query`CREATE TABLE IF NOT EXISTS ${table} (id INTEGER PRIMARY KEY, value TEXT)`;
     const {total} = await get`SELECT COUNT(id) as total FROM ${table}`;
     if (total < 1) {
       console.log('Inserting some value');
-      await query`INSERT INTO ${table} (value) VALUES (${'a'})`;
-      await query`INSERT INTO ${table} (value) VALUES (${'b'})`;
-      await query`INSERT INTO ${table} (value) VALUES (${'c'})`;
+      const populate = transaction();
+      transaction`INSERT INTO ${table} (value) VALUES (${'a'})`;
+      transaction`INSERT INTO ${table} (value) VALUES (${'b'})`;
+      transaction`INSERT INTO ${table} (value) VALUES (${'c'})`;
     }
+    await transaction.commit();
     console.table(await all`SELECT * FROM ${table}`);
   });
 ```
@@ -149,6 +151,7 @@ The API in a nutshell is:
   * **get**: a template literal tag to retrieve one row that matches the query
   * **query**: a template literal tag to simply query the database (no result returned)
   * **raw**: a template literal tag to represent static parts of the query (not values)
+  * **transaction**: a function that returns a template literal tag to perform any statement until `tag.commit()` is awaited and executed.
 
 All tags, except the `raw` helper, are *asynchronous*, so that it's possible to *await* their result.
 

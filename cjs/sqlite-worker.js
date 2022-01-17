@@ -3,6 +3,7 @@ const plain = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ign
 const {asStatic, asParams} = require('static-params');
 const {assign, dist} = require('./utils.js');
 
+const {defineProperty} = Object;
 const cache = new Map;
 
 const raw = (tpl, ...values) => asStatic(plain(tpl, ...values));
@@ -39,13 +40,26 @@ function SQLiteWorker(options = {}) {
         resolve(result);
     }
   });
+  const q = query('query');
   return post(
     'init',
     assign({dist: base, library: base + '/init.js'}, options)
   ).then(() => ({
+    transaction() {
+      let t = q(['BEGIN TRANSACTION']);
+      return defineProperty(
+        (..._) => {
+          t = t.then(() => q(..._));
+        },
+        'commit',
+        {value() {
+          return t = t.then(() => q(['COMMIT']));
+        }}
+      );
+    },
     all: query('all'),
     get: query('get'),
-    query: query('query'),
+    query: q,
     raw
   }));
 }
