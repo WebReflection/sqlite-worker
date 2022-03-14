@@ -5,7 +5,7 @@
   "main": "./cjs/index.js",
   "scripts": {
     "build": "npm run import && npm run cjs && npm run rollup:es && npm run rollup:init && npm run rollup:sw && npm run rollup:sw-tables && npm run rollup:tables && npm run rollup:worker",
-    "import": "cp node_modules/sql.js/dist/sql-wasm.{js,wasm} dist/",
+    "import": "bash -c 'cp node_modules/sql.js/dist/sql-wasm.{js,wasm} dist/'",
     "cjs": "ascjs --no-default esm cjs && npm run cjs:fix",
     "cjs:fix": "sed -i 's/{url:[^}]*}/{url: __filename}/' cjs/utils.js",
     "rollup:es": "rollup --config rollup/es.config.js",
