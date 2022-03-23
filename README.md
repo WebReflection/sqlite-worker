@@ -152,6 +152,8 @@ The API in a nutshell is:
   * **query**: a template literal tag to simply query the database (no result returned)
   * **raw**: a template literal tag to represent static parts of the query (not values)
   * **transaction**: a function that returns a template literal tag to perform any statement until `tag.commit()` is awaited and executed.
+  * **close**: a function to force save and close the db at any time.
+  * **create_function**: a function to register custom SQLite functions. **Please note** when used as *Worker* it requires a **pure function** (no outer scope access) and **Function** evaluation. No limitations when used directly through init.
 
 All tags, except the `raw` helper, are *asynchronous*, so that it's possible to *await* their result.
 

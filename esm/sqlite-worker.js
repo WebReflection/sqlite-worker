@@ -56,6 +56,11 @@ export function SQLiteWorker(options = {}) {
         }}
       );
     },
+    close: () => post('close'),
+    create_function: (name, func) => post(
+      'create_function',
+      [name, func.toString()]
+    ),
     all: query('all'),
     get: query('get'),
     query: q,

@@ -4,7 +4,7 @@ const info = whichOne => {
   ).textContent = whichOne;
 };
 
-export default async ({all, get, query, raw, transaction}) => {
+export default async ({all, get, query, close, transaction, create_function}) => {
   await query`CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, value TEXT)`;
   const {total} = await get`SELECT COUNT(id) as total FROM todos`;
   if (total < 1) {
@@ -41,6 +41,12 @@ export default async ({all, get, query, raw, transaction}) => {
   catch (o_O) {
     console.log('expected query failure', o_O);
   }
+
+  await create_function('sum_values', (a, b) => (a + b));
+  console.assert((await get`SELECT sum_values(1, 2) AS result`).result === 3, 'create_function');
+
+  await close();
+
   console.log('OK');
   info('OK');
 };

@@ -40,20 +40,18 @@ const init = (options = {}) => new Promise((resolve, onerror) => {
             let queue = Promise.resolve();
             const {result} = this;
             const db = new Database(result || options.database || new Uint8Array(0));
-            const save = () => {
-              queue = queue.then(() => new Promise((resolve, onerror) => {
-                const uint8array = db.export();
-                assign(store('readwrite').put(uint8array, keyPath).transaction, {
-                  oncomplete() {
-                    resolve();
-                    if (options.update)
-                      options.update(uint8array);
-                  },
-                  onabort: onerror,
-                  onerror
-                });
-              }));
-            };
+            const save = () => (queue = queue.then(() => new Promise((resolve, onerror) => {
+              const uint8array = db.export();
+              assign(store('readwrite').put(uint8array, keyPath).transaction, {
+                oncomplete() {
+                  resolve();
+                  if (options.update)
+                    options.update(uint8array);
+                },
+                onabort: onerror,
+                onerror
+              });
+            })));
             if (!result)
               save();
             const {all, get, query, raw, transaction} = SQLiteTag({
@@ -91,6 +89,11 @@ const init = (options = {}) => new Promise((resolve, onerror) => {
             let t = 0;
             resolve({
               all, get, raw, transaction,
+              create_function: (name, func) => db.create_function(name, func),
+              close: () => {
+                clearTimeout(t);
+                return save().then(() => db.close());
+              },
               query(template) {
                 if (/\b(?:INSERT|DELETE|UPDATE)\b/i.test(template[0])) {
                   clearTimeout(t);
